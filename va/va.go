@@ -23,7 +23,6 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/letsencrypt/challtestsrv"
 	"github.com/letsencrypt/pebble/acme"
 	"github.com/letsencrypt/pebble/core"
 )
@@ -69,6 +68,13 @@ const (
 	// making any challenge requests, e.g.:
 	//   PEBBLE_VA_ALWAYS_VALID=1 pebble"
 	noValidateEnvVar = "PEBBLE_VA_ALWAYS_VALID"
+)
+
+var (
+	// https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-01#section-5.1
+	IDPeAcmeIdentifierOld = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 30, 1}
+	// https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-07#section-5.1
+	IDPeAcmeIdentifier = asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 31}
 )
 
 func userAgent() string {
@@ -421,7 +427,7 @@ func (va VAImpl) validateTLSALPN01(task *vaTask) *core.ValidationRecord {
 	h := sha256.Sum256([]byte(expectedKeyAuthorization))
 	for _, ext := range leafCert.Extensions {
 		if ext.Critical {
-			hasAcmeIdentifier := challtestsrv.IDPeAcmeIdentifier.Equal(ext.Id)
+			hasAcmeIdentifier := IDPeAcmeIdentifier.Equal(ext.Id) || IDPeAcmeIdentifierOld.Equal(ext.Id)
 			if hasAcmeIdentifier {
 				var extValue []byte
 				if _, err := asn1.Unmarshal(ext.Value, &extValue); err != nil {
