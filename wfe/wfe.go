@@ -1796,6 +1796,10 @@ func (wfe *WebFrontEndImpl) FinalizeOrder(
 	orderIPs = uniqueIPs(orderIPs)
 
 	// sort and deduplicate CSR SANs
+	if !wfe.strict && len(parsedCSR.DNSNames) == 0 && parsedCSR.Subject.CommonName != "" {
+		wfe.log.Printf("Adding CSR subject CN to DNSNames because not strict: %s", parsedCSR.Subject.CommonName)
+		parsedCSR.DNSNames = append(parsedCSR.DNSNames, parsedCSR.Subject.CommonName)
+	}
 	csrDNSs := uniqueLowerNames(parsedCSR.DNSNames)
 	csrIPs := uniqueIPs(parsedCSR.IPAddresses)
 
